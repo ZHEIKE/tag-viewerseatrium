@@ -35,7 +35,7 @@
   .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px;}
   .card h2{margin:0 0 8px; font-size:14px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
   .row{display:flex; gap:8px; flex-wrap:wrap;}
-  input[type=text], input[type=file], select{
+  input[type=text], select{
     width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
     background:var(--panel2); color:var(--text); font-size:14px;
   }
@@ -44,16 +44,7 @@
     background:transparent; color:var(--accent); font-size:14px; font-weight:600;
   }
   button.btn.primary{background:var(--accent); color:#04121f;}
-  button.btn.ok{border-color:var(--accent2); color:var(--accent2);}
-  button.btn.ok.primary{background:var(--accent2); color:#04121f;}
-  button.btn.danger{border-color:var(--danger); color:var(--danger);}
   .muted{color:var(--muted); font-size:12.5px; line-height:1.5;}
-  .doclist{display:flex; flex-direction:column; gap:8px;}
-  .doclist .item{
-    display:flex; justify-content:space-between; align-items:center;
-    background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px 12px;
-  }
-  .doclist .item .meta{font-size:12px; color:var(--muted);}
   #scanWrap{position:relative; border-radius:12px; overflow:hidden; background:#000;}
   #video{width:100%; display:block; max-height:60vh; object-fit:cover;}
   #scanOverlay{
@@ -80,6 +71,8 @@
     padding:10px 16px; border-radius:10px; font-size:13px; z-index:50; max-width:90vw; text-align:center;
   }
   #view-viewer{flex:1; display:flex; flex-direction:column; gap:10px;}
+  footer{padding:10px 16px; text-align:center;}
+  footer a{color:var(--muted); font-size:11px; text-decoration:none;}
 </style>
 </head>
 <body>
@@ -92,7 +85,6 @@
 <nav>
   <button data-view="scan" class="active">📷 Escanear</button>
   <button data-view="viewer">📄 PDF</button>
-  <button data-view="docs">📁 Documentos</button>
 </nav>
 
 <main>
@@ -121,6 +113,7 @@
       <div class="row" style="margin-top:8px;">
         <button class="btn primary" id="btnGoTag" style="flex:1;">Abrir tag</button>
       </div>
+      <p class="muted" id="noDocsMsg"></p>
     </div>
   </section>
 
@@ -141,28 +134,13 @@
     <div class="row" id="otherPagesRow"></div>
   </section>
 
-  <!-- DOCS VIEW -->
-  <section id="view-docs" class="hidden">
-    <div class="card">
-      <h2>1. Importar manifesto (JSON gerado pelo extract_tags.py)</h2>
-      <input type="file" id="fileManifest" accept="application/json">
-      <p class="muted">Contém o mapeamento tag → página para um desenho.</p>
-    </div>
-    <div class="card">
-      <h2>2. Importar arquivo PDF correspondente</h2>
-      <input type="file" id="filePdf" accept="application/pdf">
-      <p class="muted">O PDF fica salvo no armazenamento local do navegador (IndexedDB) — funciona offline depois de importado uma vez.</p>
-    </div>
-    <div class="card">
-      <h2>Documentos salvos neste aparelho</h2>
-      <div class="doclist" id="docList"></div>
-    </div>
-  </section>
-
 </main>
+
+<footer><a href="admin.html">área do preparador (importar documentos)</a></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
-<script src="app.js"></script>
+<script src="common.js"></script>
+<script src="reader.js"></script>
 </body>
 </html>
