@@ -2,7 +2,7 @@
    primeira visita, para que tudo funcione sem internet depois disso.
    Os PDFs/manifestos ficam no IndexedDB, não aqui. */
 
-const CACHE_NAME = "tagviewer-cache-v2";
+const CACHE_NAME = "tagviewer-cache-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -14,6 +14,8 @@ const ASSETS = [
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
 ];
 
 self.addEventListener("install", (event) => {
