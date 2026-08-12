@@ -92,7 +92,20 @@
   <!-- SCAN VIEW -->
   <section id="view-scan">
     <div class="card">
-      <h2>Escanear QR code</h2>
+      <h2>Como escanear</h2>
+      <p class="muted" style="font-size:14px; line-height:1.6;">
+        Use a <strong>câmera nativa do celular</strong> (ou o Google Lens) para
+        apontar direto para a etiqueta com QR code. Assim que o link aparecer
+        na tela, toque nele — o app abre automaticamente na página exata
+        daquele tag, mesmo offline (se o documento já tiver sido importado
+        neste aparelho).
+      </p>
+      <p class="muted">No iPhone: abra o app Câmera e aponte, sem precisar tocar em nada. No Android: abra a Câmera ou o Google Lens.</p>
+    </div>
+
+    <div class="card">
+      <h2>Escaneamento pelo navegador (alternativa)</h2>
+      <p class="muted">Se preferir escanear direto por aqui em vez da câmera nativa:</p>
       <div id="scanWrap">
         <video id="video" playsinline muted></video>
         <div id="scanOverlay"><div class="box"></div></div>
@@ -101,7 +114,6 @@
         <button class="btn primary" id="btnStartScan">Iniciar câmera</button>
         <button class="btn" id="btnStopScan">Parar</button>
       </div>
-      <p class="muted">Aponte a câmera para a etiqueta com QR code fixada no tag. Assim que reconhecido, a página exata do desenho é aberta automaticamente.</p>
     </div>
 
     <div class="card">
