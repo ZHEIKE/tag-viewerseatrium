@@ -2,7 +2,7 @@
    primeira visita, para que tudo funcione sem internet depois disso.
    Os PDFs/manifestos ficam no IndexedDB, não aqui. */
 
-const CACHE_NAME = "tagviewer-cache-v4";
+const CACHE_NAME = "tagviewer-cache-v5";
 const ASSETS = [
   "./",
   "./index.html",
