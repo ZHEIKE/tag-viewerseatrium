@@ -26,7 +26,11 @@ const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
 async function startScan() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
     });
     video.srcObject = stream;
     await video.play();
