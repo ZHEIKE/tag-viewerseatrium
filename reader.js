@@ -63,10 +63,19 @@ document.getElementById("btnStartScan").addEventListener("click", startScan);
 document.getElementById("btnStopScan").addEventListener("click", stopScan);
 
 function handleScannedText(text) {
-  let hash = text;
-  const hashIdx = text.indexOf("#");
-  if (hashIdx >= 0) hash = text.slice(hashIdx + 1);
-  const params = new URLSearchParams(hash);
+  // extrai a parte de parâmetros de qualquer URL escaneada, aceitando
+  // tanto ?doc=X&tag=Y (formato atual) quanto #doc=X&tag=Y (formato antigo)
+  let query = "";
+  const qIdx = text.indexOf("?");
+  const hIdx = text.indexOf("#");
+  if (qIdx >= 0) {
+    query = text.slice(qIdx + 1, hIdx >= 0 && hIdx > qIdx ? hIdx : undefined);
+  } else if (hIdx >= 0) {
+    query = text.slice(hIdx + 1);
+  } else {
+    query = text;
+  }
+  const params = new URLSearchParams(query);
   const doc = params.get("doc");
   const tag = params.get("tag");
   if (!doc || !tag) {
@@ -203,11 +212,17 @@ document.getElementById("btnNextPage").addEventListener("click", async () => {
 });
 
 // ---------- Deep link via hash (#doc=X&tag=Y) ----------
-async function handleInitialHash() {
-  if (!location.hash) return;
-  const params = new URLSearchParams(location.hash.slice(1));
-  const doc = params.get("doc");
-  const tag = params.get("tag");
+// ---------- Deep link via ?doc=X&tag=Y (novo) ou #doc=X&tag=Y (antigo) ----------
+async function handleInitialLink() {
+  // prioriza query string (mais robusta contra apps que removem o #)
+  let params = new URLSearchParams(location.search);
+  let doc = params.get("doc");
+  let tag = params.get("tag");
+  if ((!doc || !tag) && location.hash) {
+    params = new URLSearchParams(location.hash.slice(1));
+    doc = params.get("doc");
+    tag = params.get("tag");
+  }
   if (doc && tag) {
     await openTag(doc, tag);
   }
@@ -217,7 +232,7 @@ async function handleInitialHash() {
 (async function init() {
   await initDB();
   await refreshDocSelect();
-  await handleInitialHash();
-  window.addEventListener("hashchange", handleInitialHash);
+  await handleInitialLink();
+  window.addEventListener("hashchange", handleInitialLink);
   await registerSW();
 })();
