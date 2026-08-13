@@ -2,7 +2,7 @@
    primeira visita, para que tudo funcione sem internet depois disso.
    Os PDFs/manifestos ficam no IndexedDB, não aqui. */
 
-const CACHE_NAME = "tagviewer-cache-v5";
+const CACHE_NAME = "tagviewer-cache-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,9 +11,10 @@ const ASSETS = [
   "./reader.js",
   "./admin.js",
   "./manifest.webmanifest",
+  "./seatrium-logo.png",
+  "./icon.svg",
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
-  "https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -23,7 +24,7 @@ self.addEventListener("install", (event) => {
         ASSETS.map((url) =>
           fetch(url, { mode: "cors" })
             .then((res) => cache.put(url, res))
-            .catch(() => {}) // não falha a instalação se um asset opcional não carregar
+            .catch(() => {})
         )
       )
     )

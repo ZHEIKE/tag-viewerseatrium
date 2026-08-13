@@ -1,11 +1,7 @@
 /* admin.js — lógica da página admin.html (área do preparador).
    Único lugar do app onde é possível importar/apagar documentos.
-
-   Importa um par manifesto.json + pdf JÁ GERADO no PC (extract_tags.py
-   ou process_all_blocks.py). A extração de tags é feita em Python
-   (mais confiável que fazer no navegador — testado com 105/105 tags
-   corretos no bloco 1; a extração via pdf.js no navegador embaralhava
-   texto de colunas vizinhas da tabela e não é usada aqui). */
+   Importa um par manifesto.json + pdf já gerado no PC (extract_tags.py
+   ou process_all_blocks.py). */
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";

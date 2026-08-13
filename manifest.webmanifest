@@ -1,10 +1,10 @@
 {
-  "name": "Visualizador de TAGs — Desenhos MCT",
+  "name": "Visualizador de TAGs — Seatrium EA",
   "short_name": "TagViewer",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0b2e4f",
+  "background_color": "#f3f5fa",
+  "theme_color": "#0045ff",
   "orientation": "portrait-primary",
   "icons": [
     {

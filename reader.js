@@ -1,6 +1,7 @@
 /* reader.js — lógica da página index.html (uso em campo).
-   Só lê o que já foi importado via admin.html; não tem nenhuma forma
-   de adicionar, editar ou apagar documentos. */
+   Só lê o que já foi importado via admin.html. Sem scanner de câmera
+   embutido — o QR é lido pela câmera nativa do celular / Google Lens,
+   que abre o link direto (?doc=X&tag=Y), tratado aqui na inicialização. */
 
 // ---------- Navegação entre views ----------
 const views = ["scan", "viewer"];
@@ -11,80 +12,10 @@ function showView(name) {
   document.querySelectorAll("nav button").forEach((b) => {
     b.classList.toggle("active", b.dataset.view === name);
   });
-  if (name !== "scan") stopScan();
 }
 document.querySelectorAll("nav button").forEach((b) => {
   b.addEventListener("click", () => showView(b.dataset.view));
 });
-
-// ---------- Câmera + leitura de QR (jsQR) ----------
-let stream, scanLoopId;
-const video = document.getElementById("video");
-const scanCanvas = document.createElement("canvas");
-const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
-
-async function startScan() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-      },
-    });
-    video.srcObject = stream;
-    await video.play();
-    scanLoopId = requestAnimationFrame(scanFrame);
-  } catch (err) {
-    toast("Não foi possível acessar a câmera: " + err.message);
-  }
-}
-function stopScan() {
-  if (scanLoopId) cancelAnimationFrame(scanLoopId);
-  if (stream) stream.getTracks().forEach((t) => t.stop());
-  stream = null;
-}
-function scanFrame() {
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-    scanCanvas.width = video.videoWidth;
-    scanCanvas.height = video.videoHeight;
-    scanCtx.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
-    const imgData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
-    const code = jsQR(imgData.data, imgData.width, imgData.height);
-    if (code && code.data) {
-      handleScannedText(code.data);
-      stopScan();
-      return;
-    }
-  }
-  scanLoopId = requestAnimationFrame(scanFrame);
-}
-document.getElementById("btnStartScan").addEventListener("click", startScan);
-document.getElementById("btnStopScan").addEventListener("click", stopScan);
-
-function handleScannedText(text) {
-  // extrai a parte de parâmetros de qualquer URL escaneada, aceitando
-  // tanto ?doc=X&tag=Y (formato atual) quanto #doc=X&tag=Y (formato antigo)
-  let query = "";
-  const qIdx = text.indexOf("?");
-  const hIdx = text.indexOf("#");
-  if (qIdx >= 0) {
-    query = text.slice(qIdx + 1, hIdx >= 0 && hIdx > qIdx ? hIdx : undefined);
-  } else if (hIdx >= 0) {
-    query = text.slice(hIdx + 1);
-  } else {
-    query = text;
-  }
-  const params = new URLSearchParams(query);
-  const doc = params.get("doc");
-  const tag = params.get("tag");
-  if (!doc || !tag) {
-    toast("QR code não reconhecido pelo app.");
-    return;
-  }
-  toast(`Tag ${tag} — abrindo...`);
-  openTag(doc, tag);
-}
 
 // ---------- Busca manual ----------
 document.getElementById("btnGoTag").addEventListener("click", () => {
@@ -190,6 +121,7 @@ async function renderCurrentPage() {
   await page.render({ canvasContext: ctx, viewport }).promise;
   document.getElementById("pageIndicator").textContent =
     `pág. ${pageNum} de ${currentPdfDoc.numPages}`;
+  resetZoom();
 }
 
 document.getElementById("btnPrevPage").addEventListener("click", async () => {
@@ -211,10 +143,77 @@ document.getElementById("btnNextPage").addEventListener("click", async () => {
   }
 });
 
-// ---------- Deep link via hash (#doc=X&tag=Y) ----------
+// ---------- Zoom por pinça + pan (touch) ----------
+let zoomScale = 1, zoomTx = 0, zoomTy = 0;
+let pinchStartDist = null;
+let panActive = false;
+let panStart = { x: 0, y: 0 };
+let panOrigin = { x: 0, y: 0 };
+let lastTapTime = 0;
+
+function applyZoomTransform() {
+  const canvas = document.getElementById("pageCanvas");
+  canvas.style.transform = `translate(${zoomTx}px, ${zoomTy}px) scale(${zoomScale})`;
+}
+function resetZoom() {
+  zoomScale = 1;
+  zoomTx = 0;
+  zoomTy = 0;
+  applyZoomTransform();
+}
+function touchDistance(t1, t2) {
+  const dx = t1.clientX - t2.clientX;
+  const dy = t1.clientY - t2.clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+const zoomWrap = document.getElementById("pageCanvasWrap");
+zoomWrap.addEventListener(
+  "touchstart",
+  (e) => {
+    if (e.touches.length === 2) {
+      pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        resetZoom();
+      }
+      lastTapTime = now;
+      if (zoomScale > 1) {
+        panActive = true;
+        panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        panOrigin = { x: zoomTx, y: zoomTy };
+      }
+    }
+  },
+  { passive: true }
+);
+zoomWrap.addEventListener(
+  "touchmove",
+  (e) => {
+    if (e.touches.length === 2 && pinchStartDist) {
+      e.preventDefault();
+      const dist = touchDistance(e.touches[0], e.touches[1]);
+      const ratio = dist / pinchStartDist;
+      zoomScale = Math.min(Math.max(zoomScale * ratio, 1), 5);
+      pinchStartDist = dist;
+      applyZoomTransform();
+    } else if (e.touches.length === 1 && panActive) {
+      e.preventDefault();
+      zoomTx = panOrigin.x + (e.touches[0].clientX - panStart.x);
+      zoomTy = panOrigin.y + (e.touches[0].clientY - panStart.y);
+      applyZoomTransform();
+    }
+  },
+  { passive: false }
+);
+zoomWrap.addEventListener("touchend", (e) => {
+  if (e.touches.length < 2) pinchStartDist = null;
+  if (e.touches.length === 0) panActive = false;
+});
+
 // ---------- Deep link via ?doc=X&tag=Y (novo) ou #doc=X&tag=Y (antigo) ----------
 async function handleInitialLink() {
-  // prioriza query string (mais robusta contra apps que removem o #)
   let params = new URLSearchParams(location.search);
   let doc = params.get("doc");
   let tag = params.get("tag");

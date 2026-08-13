@@ -1,7 +1,6 @@
 /* common.js — compartilhado entre index.html (leitura, uso em campo) e
    admin.html (importação, uso de quem prepara). Ambas as páginas vivem
-   no mesmo domínio, então compartilham o mesmo IndexedDB — o que é
-   importado no admin.html fica disponível automaticamente no index.html. */
+   no mesmo domínio, então compartilham o mesmo IndexedDB. */
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
