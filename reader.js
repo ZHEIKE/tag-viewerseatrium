@@ -112,7 +112,19 @@ async function renderCurrentPage() {
   const ctx = canvas.getContext("2d");
   const containerWidth = document.getElementById("pageCanvasWrap").clientWidth || 360;
   const baseViewport = page.getViewport({ scale: 1 });
-  const scale = (containerWidth / baseViewport.width) * (window.devicePixelRatio || 1);
+
+  // renderiza numa resolução bem maior que a tela, para que o zoom por
+  // pinça mostre detalhe de verdade em vez de ampliar pixels grosseiros
+  const QUALITY_BOOST = 3;
+  const MAX_DIMENSION = 4200; // limite de segurança para não travar aparelhos mais fracos
+
+  let scale = (containerWidth * QUALITY_BOOST / baseViewport.width) * (window.devicePixelRatio || 1);
+  const projectedWidth = baseViewport.width * scale;
+  const projectedHeight = baseViewport.height * scale;
+  if (Math.max(projectedWidth, projectedHeight) > MAX_DIMENSION) {
+    scale *= MAX_DIMENSION / Math.max(projectedWidth, projectedHeight);
+  }
+
   const viewport = page.getViewport({ scale });
   canvas.width = viewport.width;
   canvas.height = viewport.height;
