@@ -85,4 +85,6 @@ async function refreshDocList() {
   await initDB();
   await refreshDocList();
   await registerSW();
+  const vEl = document.getElementById("versionTag");
+  if (vEl) vEl.textContent = `app ${APP_VERSION}`;
 })();
