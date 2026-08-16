@@ -51,7 +51,7 @@ let currentTag = null;
 let currentPages = [];
 let currentPageIdx = 0;
 
-async function openTag(docId, tag) {
+async function openTag(docId, tag, requestedPage) {
   const manifest = await idbGet("manifests", docId);
   if (!manifest) {
     toast(`Documento "${docId}" não está disponível neste aparelho. Peça para importarem na área do preparador.`);
@@ -73,7 +73,11 @@ async function openTag(docId, tag) {
   currentDocId = docId;
   currentTag = tag;
   currentPages = pages;
-  currentPageIdx = 0;
+  // se a etiqueta indicava uma página específica (?page=), abre nela;
+  // senão, abre na primeira ocorrência do tag
+  const reqPageNum = requestedPage ? parseInt(requestedPage, 10) : null;
+  const foundIdx = reqPageNum ? pages.indexOf(reqPageNum) : -1;
+  currentPageIdx = foundIdx >= 0 ? foundIdx : 0;
   document.getElementById("statusText").textContent = "offline pronto";
 
   document.getElementById("viewerTagLabel").textContent = tag;
@@ -229,13 +233,15 @@ async function handleInitialLink() {
   let params = new URLSearchParams(location.search);
   let doc = params.get("doc");
   let tag = params.get("tag");
+  let page = params.get("page");
   if ((!doc || !tag) && location.hash) {
     params = new URLSearchParams(location.hash.slice(1));
     doc = params.get("doc");
     tag = params.get("tag");
+    page = params.get("page");
   }
   if (doc && tag) {
-    await openTag(doc, tag);
+    await openTag(doc, tag, page);
   }
 }
 
