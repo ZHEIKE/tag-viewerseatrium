@@ -228,6 +228,37 @@ zoomWrap.addEventListener("touchend", (e) => {
   if (e.touches.length === 0) panActive = false;
 });
 
+// ---------- Tela cheia ----------
+async function enterFullscreen() {
+  document.body.classList.add("fs-mode");
+  document.getElementById("btnExitFullscreen").classList.remove("hidden");
+  try {
+    const el = document.getElementById("pageCanvasWrap");
+    if (el.requestFullscreen) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } catch (_) {
+    // API de tela cheia real não suportada (comum em iOS) — o modo CSS já
+    // esconde cabeçalho/rodapé e ocupa a tela toda mesmo assim.
+  }
+  if (currentPdfDoc) await renderCurrentPage();
+}
+async function exitFullscreen() {
+  document.body.classList.remove("fs-mode");
+  document.getElementById("btnExitFullscreen").classList.add("hidden");
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+    else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+  } catch (_) {}
+  if (currentPdfDoc) await renderCurrentPage();
+}
+document.getElementById("btnFullscreen").addEventListener("click", enterFullscreen);
+document.getElementById("btnExitFullscreen").addEventListener("click", exitFullscreen);
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && document.body.classList.contains("fs-mode")) {
+    exitFullscreen();
+  }
+});
+
 // ---------- Deep link via ?doc=X&tag=Y (novo) ou #doc=X&tag=Y (antigo) ----------
 async function handleInitialLink() {
   let params = new URLSearchParams(location.search);
