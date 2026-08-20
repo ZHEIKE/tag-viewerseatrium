@@ -65,13 +65,13 @@
 
 <main>
   <div class="card">
-    <h2>Importar um documento</h2>
-    <p class="muted">Selecione de uma vez o arquivo <code>.manifest.json</code> (gerado pelo <code>extract_tags.py</code> ou <code>process_all_blocks.py</code> no PC) e o <code>.pdf</code> correspondente — Ctrl/Cmd+clique no seletor para marcar os dois juntos. O doc_id é lido automaticamente do manifesto.</p>
+    <h2>Importar documentos</h2>
+    <p class="muted">Selecione TODOS os arquivos de uma vez — pode ser mais de um documento junto (ex: os 11 blocos: 11 arquivos <code>.manifest.json</code> + 11 arquivos <code>.pdf</code>). O app agrupa automaticamente pelo nome do arquivo (ex: <code>B1.manifest.json</code> com <code>B1.pdf</code>) e importa cada par.</p>
     <input type="file" id="filePair" accept="application/json,application/pdf" multiple>
     <div class="row" style="margin-top:8px;">
-      <button class="btn primary" id="btnImportPair" style="flex:1;">Importar documento</button>
+      <button class="btn primary" id="btnImportPair" style="flex:1;">Importar documentos</button>
     </div>
-    <p class="muted" id="pairStatus"></p>
+    <div id="pairStatus" class="muted" style="margin-top:8px;"></div>
   </div>
 
   <div class="card">
