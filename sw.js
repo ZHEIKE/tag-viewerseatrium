@@ -2,7 +2,7 @@
    primeira visita, para que tudo funcione sem internet depois disso.
    Os PDFs/manifestos ficam no IndexedDB, não aqui. */
 
-const CACHE_NAME = "tagviewer-cache-v11";
+const CACHE_NAME = "tagviewer-cache-v12";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,7 +12,7 @@ const ASSETS = [
   "./admin.js",
   "./manifest.webmanifest",
   "./seatrium-logo.png",
-  "./icon.svg",
+  "./icon.png",
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
 ];
