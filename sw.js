@@ -1,38 +1,25 @@
-/* Service worker — cacheia os arquivos do app (e as libs de CDN) na
-   primeira visita, para que tudo funcione sem internet depois disso.
-   Os PDFs/manifestos ficam no IndexedDB, não aqui. */
-
-const CACHE_NAME = "tagviewer-cache-v12";
+const CACHE_NAME = 'apontamento-npo-v28';
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./admin.html",
-  "./common.js",
-  "./reader.js",
-  "./admin.js",
-  "./manifest.webmanifest",
-  "./seatrium-logo.png",
-  "./icon.png",
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './tags_data.json',
+  './manifest.json',
+  './seatrium-logo.png',
+  './ea-logo.png',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(
-        ASSETS.map((url) =>
-          fetch(url, { mode: "cors" })
-            .then((res) => cache.put(url, res))
-            .catch(() => {})
-        )
-      )
-    )
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
@@ -41,17 +28,11 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
+// App shell: cache-first. Sync calls to Apps Script go straight to network (not cached).
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return; // let sync POSTs pass through untouched
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return res;
-        })
-        .catch(() => cached);
-    })
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });

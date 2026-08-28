@@ -2,187 +2,283 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Visualizador de TAGs — Seatrium EA</title>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="QR-CABO NPO">
-<meta name="theme-color" content="#0045ff">
-<style>
-  :root{
-    --brand:#0045ff; --brand-dark:#002e99; --brand-light:#e6edff;
-    --bg:#f3f5fa; --panel:#ffffff; --panel2:#f3f5fa; --border:#dbe2f0;
-    --text:#0a1430; --muted:#5b6884; --accent2:#0aa66b; --danger:#e0303f;
-  }
-  *{box-sizing:border-box;}
-  html,body{height:100%;}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    display:flex; flex-direction:column;
-  }
-  header{
-    padding:16px 18px 14px; background:var(--panel); border-bottom:1px solid var(--border);
-    display:flex; flex-direction:column; gap:2px;
-  }
-  header .logoRow{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-  header img.logo{height:26px; display:block;}
-  header .sub{font-size:12px; font-weight:600; color:var(--brand); letter-spacing:.03em;}
-  header .status{
-    font-size:11px; font-weight:600; color:var(--accent2); background:#e5f8ef;
-    padding:3px 10px; border-radius:999px;
-  }
-  nav{display:flex; gap:6px; padding:8px 10px; background:var(--panel); border-bottom:1px solid var(--border);}
-  nav button{
-    flex:1; padding:10px 6px; border-radius:10px; border:1px solid var(--border);
-    background:var(--panel2); color:var(--text); font-size:13px; font-weight:600;
-  }
-  nav button.active{background:var(--brand); border-color:var(--brand); color:#fff;}
-  main{flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:14px;}
-  .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px;}
-  .card h2{margin:0 0 10px; font-size:15px; color:var(--brand); font-weight:700;}
-  .row{display:flex; gap:8px; flex-wrap:wrap;}
-  input[type=text], select{
-    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
-    background:var(--panel2); color:var(--text); font-size:14px;
-  }
-  button.btn{
-    padding:10px 14px; border-radius:10px; border:1px solid var(--brand);
-    background:#fff; color:var(--brand); font-size:14px; font-weight:700;
-  }
-  button.btn.primary{background:var(--brand); color:#fff;}
-  .muted{color:var(--muted); font-size:13px; line-height:1.6;}
-  .steps{margin:0; padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);}
-  .steps li{margin-bottom:4px;}
-  #viewerBar{display:flex; align-items:center; gap:8px; justify-content:space-between;}
-  #viewerBar .tagpill{
-    background:var(--brand-light); border:1px solid var(--border); border-radius:999px;
-    padding:6px 12px; font-size:13px; font-weight:700; color:var(--brand-dark);
-  }
-  #pageCanvasWrap{
-    flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center;
-    background:#0a1430; border-radius:12px; touch-action:none; position:relative;
-  }
-  #pageCanvas{max-width:100%; max-height:70vh; touch-action:none; transform-origin:center center;}
-  body.fs-mode #pageCanvas{max-height:100vh;}
-  .zoomHint{
-    position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
-    font-size:11px; color:#c8d3ef; background:rgba(10,20,48,.6);
-    padding:4px 10px; border-radius:999px; pointer-events:none;
-  }
-  .pageNav{display:flex; gap:8px; align-items:center; justify-content:center;}
-  .pageNav span{font-size:13px; color:var(--muted); min-width:80px; text-align:center;}
-  .hidden{display:none !important;}
-  .toast{
-    position:fixed; left:50%; bottom:70px; transform:translateX(-50%);
-    background:var(--text); border:1px solid var(--border); color:#fff;
-    padding:10px 16px; border-radius:10px; font-size:13px; z-index:50; max-width:90vw; text-align:center;
-  }
-  #view-viewer{flex:1; display:flex; flex-direction:column; gap:10px;}
-  footer{
-    padding:12px 18px; text-align:center; background:var(--panel);
-    border-top:1px solid var(--border); display:flex; flex-direction:column; gap:4px;
-  }
-  footer .contact{font-size:12.5px; color:var(--text);}
-  footer .contact a{color:var(--brand); font-weight:700; text-decoration:none;}
-  footer a.admin{color:var(--muted); font-size:11px; text-decoration:none;}
-  footer .version{display:block; color:var(--muted); font-size:10px; margin-top:2px; opacity:.7;}
-
-  /* modo tela cheia: esconde cabeçalho/nav/rodapé, expande o PDF */
-  body.fs-mode header,
-  body.fs-mode nav,
-  body.fs-mode footer,
-  body.fs-mode #viewerBar,
-  body.fs-mode .pageNav,
-  body.fs-mode #otherPagesRow{
-    display:none !important;
-  }
-  body.fs-mode main{padding:0;}
-  body.fs-mode #pageCanvasWrap{
-    border-radius:0; height:100vh;
-  }
-  .fsExitBtn{
-    position:absolute; top:10px; right:10px; z-index:20;
-    background:rgba(10,20,48,.75); color:#fff; border-color:rgba(255,255,255,.4);
-    font-size:12px; padding:8px 12px;
-  }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apontamento de Campo - NPO</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#003eff">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="app">
 
-<header>
-  <div class="logoRow">
-    <img class="logo" src="seatrium-logo.png" alt="Seatrium">
-    <span class="status" id="statusText">offline pronto</span>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="topbar-brand">
+        <img src="seatrium-logo.png" alt="Seatrium" class="brand-mark">
+        <div class="brand-ea-row">
+          <img src="ea-logo.png" alt="EA" class="brand-mark-ea">
+          <span class="brand-ea-text">Elétrica e Automação</span>
+        </div>
+      </div>
+      <div class="status-pill offline" id="connStatus">Offline</div>
+    </div>
+    <div class="topbar-sub" id="topbarSub">Apontamento de Campo — Projeto NPO <span class="app-version">v28</span></div>
+    <div class="topbar-sub" id="topbarOperador" style="display:none"></div>
+    <button class="pending-badge" id="pendingBadge" style="display:none" onclick="Screens.go('sync')">
+      <span id="pendingCount"><b>0</b> apontamento(s) aguardando sincronizar</span>
+    </button>
+    <button class="pending-badge" id="cartBadge" style="display:none; border-color:var(--accent)" onclick="Screens.go('carrinho')"></button>
   </div>
-  <span class="sub">Elétrica e Automação — Visualizador de TAGs</span>
-</header>
 
-<nav>
-  <button data-view="scan" class="active">Escanear</button>
-  <button data-view="viewer">PDF</button>
-</nav>
+  <div class="crumbs" id="crumbs" style="display:none"></div>
 
-<main>
-
-  <!-- SCAN VIEW -->
-  <section id="view-scan">
-    <div class="card">
-      <h2>Como escanear</h2>
-      <ol class="steps">
-        <li>Use a <strong>câmera nativa do celular</strong> (ou o Google Lens) e aponte para a etiqueta com QR code.</li>
-        <li>Toque no link que aparecer na tela.</li>
-        <li>O app abre automaticamente na página exata daquele tag — mesmo offline, se o documento já tiver sido importado neste aparelho.</li>
-      </ol>
-      <p class="muted">iPhone: abra o app Câmera e aponte, sem precisar tocar em nada. Android: abra a Câmera ou o Google Lens.</p>
+  <!-- ===================== TELA: OPERADOR ===================== -->
+  <div class="screen active" id="screen-operador">
+    <div class="screen-title">Quem está apontando?</div>
+    <div class="screen-desc">Selecione seu nome na lista. Se não aparecer, cadastre-se abaixo.</div>
+    <div class="btn-block-list" id="listaOperadores"></div>
+    <div style="margin-top:16px">
+      <button class="link-btn" onclick="Screens.go('cadastrarOperador')">+ Cadastrar meu nome</button>
     </div>
+    <div style="margin-top:28px; text-align:center">
+      <button class="link-btn" onclick="Screens.go('config')">Configurações / equipe</button>
+    </div>
+    <svg class="decor-wave" viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 120 C60 80 120 150 180 110 C260 55 320 140 400 90 L400 200 L0 200 Z" fill="#5b8cff" opacity="0.55"/>
+      <path d="M0 150 C80 110 140 175 220 130 C290 90 340 165 400 130 L400 200 L0 200 Z" fill="#003eff" opacity="0.85"/>
+    </svg>
+  </div>
 
-    <div class="card">
-      <h2>Buscar manualmente</h2>
-      <div class="row">
-        <select id="docSelect" style="flex:2;"></select>
-        <input type="text" id="tagInput" placeholder="Ex: 104P-FM-006" style="flex:2;">
+  <!-- ===================== TELA: CADASTRAR OPERADOR ===================== -->
+  <div class="screen" id="screen-cadastrarOperador">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Cadastrar novo nome</div>
+    <div class="field-group">
+      <label class="field-label field-required">Nome completo</label>
+      <input type="text" id="novoOperadorNome" placeholder="Ex: João da Silva" style="width:100%; padding:14px; border-radius:10px; border:1.5px solid var(--steel-light); font-size:15px;">
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="App.salvarOperador()">Salvar e continuar</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: ATIVIDADE ===================== -->
+  <div class="screen" id="screen-atividade">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Qual atividade você vai reportar?</div>
+    <div class="screen-desc">Selecione o tipo de montagem. Isso filtra as TAGs certas para você em seguida.</div>
+    <div class="btn-block-list" id="listaAtividades"></div>
+  </div>
+
+  <!-- ===================== TELA: BLOCO ===================== -->
+  <div class="screen" id="screen-bloco">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Selecione o Bloco</div>
+    <div class="screen-desc">Bloco onde o item foi instalado.</div>
+    <div class="btn-block-list" id="listaBlocos"></div>
+  </div>
+
+  <!-- ===================== TELA: SUBBLOCO ===================== -->
+  <div class="screen" id="screen-subbloco">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Selecione o Sub-bloco</div>
+    <div class="screen-desc" id="subblocoDesc"></div>
+    <div class="btn-block-list" id="listaSubBlocos"></div>
+  </div>
+
+  <!-- ===================== TELA: BUSCA TAG ===================== -->
+  <div class="screen" id="screen-busca">
+    <button class="link-btn" style="margin-bottom:10px; align-self:flex-start" onclick="Screens.voltar()">← Voltar</button>
+    <div class="search-wrap">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px">
+        <span class="candidate-count" style="margin:0" id="candidateCount"></span>
+        <div style="display:flex; gap:12px">
+          <button class="link-btn" onclick="Busca.abrirColar()">📋 Colar lista</button>
+          <button class="link-btn" id="btnToggleMulti" onclick="Busca.alternarModoMultiplo()">Selecionar várias</button>
+        </div>
       </div>
-      <div class="row" style="margin-top:8px;">
-        <button class="btn primary" id="btnGoTag" style="flex:1;">Abrir tag</button>
+      <div id="painelColar" style="display:none; margin-bottom:14px">
+        <textarea id="textareaColar" placeholder="Cole aqui várias TAGs — uma por linha, ou separadas por vírgula/espaço/tab. Só busca dentro deste Bloco/Sub-bloco." style="min-height:100px; width:100%; font-family:var(--mono); font-size:12.5px; padding:10px; border-radius:10px; border:1.5px solid var(--line); background:white;"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <button class="btn btn-primary" style="min-height:44px" onclick="Busca.processarColagem()">Buscar TAGs coladas</button>
+          <button class="btn btn-secondary" style="min-height:44px; width:auto; padding:0 18px; flex:none" onclick="Busca.fecharColar()">Cancelar</button>
+        </div>
+        <div id="resultadoColagem" style="margin-top:10px; font-size:12.5px; line-height:1.5"></div>
       </div>
-      <p class="muted" id="noDocsMsg"></p>
+      <input type="text" class="search-input" id="inputBusca" placeholder="Digite o que conseguir ler da TAG..." autocomplete="off">
+      <div class="search-hint">Digite qualquer trecho legível, em qualquer posição. Etiqueta corroída? Digite só o que der — a lista já mostra os itens mais prováveis desse local. <span style="color:var(--danger); font-weight:600">Itens em vermelho já foram reportados como instalados.</span></div>
     </div>
-  </section>
+    <div id="listaCandidatos"></div>
+    <div class="action-bar" id="barraSelecaoMultipla" style="display:none">
+      <button class="btn btn-primary" id="btnContinuarLote" onclick="Busca.irParaLote()">Continuar com 0 selecionadas</button>
+    </div>
+  </div>
 
-  <!-- VIEWER VIEW -->
-  <section id="view-viewer" class="hidden">
-    <div id="viewerBar">
-      <span class="tagpill" id="viewerTagLabel">—</span>
-      <div class="row" style="gap:6px;">
-        <button class="btn" id="btnFullscreen" title="Tela cheia">⛶ Tela cheia</button>
-        <span class="muted" id="viewerDocLabel">—</span>
+  <!-- ===================== TELA: APONTAMENTO EM LOTE ===================== -->
+  <div class="screen" id="screen-apontamentoLote">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Registrar várias TAGs</div>
+    <div class="screen-desc">Os campos abaixo serão aplicados a todas as TAGs selecionadas.</div>
+    <div class="detail-card" id="resumoLoteCard"></div>
+
+    <div class="field-group">
+      <label class="field-label field-required">Status (pode marcar mais de um)</label>
+      <div class="choice-grid" id="statusChoicesLote"></div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Observação (aplicada a todas)</label>
+      <textarea id="inputObservacaoLote" placeholder="Detalhes relevantes (opcional)"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Foto geral (opcional)</label>
+      <div id="photoAreaLote">
+        <div class="photo-box" onclick="document.getElementById('inputFotoLote').click()">
+          📷 Toque para tirar ou anexar uma foto do conjunto
+        </div>
+      </div>
+      <input type="file" id="inputFotoLote" accept="image/*" capture="environment" style="display:none" onchange="App.handleFotoLote(event)">
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-secondary" id="btnFinalizarLoteDireto" style="margin-bottom:8px; border-color:var(--success); color:var(--success)" onclick="App.adicionarGrupoEFinalizar()" disabled>✅ Finalizar apontamento e enviar</button>
+      <button class="btn btn-primary" id="btnSalvarLote" onclick="App.adicionarGrupoAoCarrinho()" disabled>🛒 Adicionar ao carrinho</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: CARRINHO ===================== -->
+  <div class="screen" id="screen-carrinho">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Carrinho de apontamentos</div>
+    <div class="screen-desc">Grupos adicionados de diferentes Blocos/Atividades. Nada foi enviado ainda — revise e finalize quando terminar.</div>
+    <div id="listaCarrinho"></div>
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="Carrinho.finalizarTudo()">✅ Finalizar apontamento e enviar</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: CONFIRMAR TAG ===================== -->
+  <div class="screen" id="screen-confirmarTag">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">É esse item?</div>
+    <div class="detail-card" id="detalheTagCard"></div>
+    <div class="btn-block-list">
+      <button class="btn btn-primary" onclick="App.abrirApontamento()">Sim, é este item</button>
+      <button class="btn btn-secondary" onclick="Screens.go('busca')">Não, voltar à busca</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: APONTAMENTO ===================== -->
+  <div class="screen" id="screen-apontamento">
+    <button class="link-btn" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Registrar apontamento</div>
+    <div class="detail-card" id="detalheTagResumo"></div>
+
+    <div class="field-group">
+      <label class="field-label field-required">Status (pode marcar mais de um)</label>
+      <div class="choice-grid" id="statusChoices"></div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Nível de identificação da TAG</label>
+      <select id="selectConfianca">
+        <option value="Completa e legível">TAG completa e legível</option>
+        <option value="Parcial - identificada por padrão">TAG parcial — identificada por padrão digitado</option>
+        <option value="Ilegível - identificada por características físicas">TAG ilegível — identificada por características físicas</option>
+        <option value="Ambígua - múltiplas TAGs possíveis">Ambígua — múltiplas TAGs possíveis</option>
+      </select>
+      <div class="confidence-note">Isso ajuda quem for conferir depois a saber onde checar com mais atenção.</div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Observação</label>
+      <textarea id="inputObservacao" placeholder="Detalhes relevantes (opcional)"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Foto da etiqueta / peça (opcional)</label>
+      <div id="photoArea">
+        <div class="photo-box" onclick="document.getElementById('inputFoto').click()">
+          📷 Toque para tirar ou anexar foto
+        </div>
+      </div>
+      <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none" onchange="App.handleFoto(event)">
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary" id="btnSalvarApontamento" onclick="App.salvarApontamento()" disabled>Salvar apontamento</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: CONFIRMACAO ===================== -->
+  <div class="screen" id="screen-confirmacao">
+    <button class="link-btn" style="margin-bottom:10px; align-self:flex-start" onclick="Screens.voltar()">← Voltar</button>
+    <div class="confirm-icon">✓</div>
+    <div class="screen-title" style="text-align:center">Apontamento salvo</div>
+    <div class="screen-desc" style="text-align:center" id="confirmacaoDesc">
+      Salvo neste aparelho. Será enviado automaticamente quando houver internet.
+    </div>
+    <div class="candidate-count" style="margin-top:4px">Resumo desta sessão</div>
+    <div id="listaResumoConfirmacao" style="margin-bottom:16px"></div>
+    <div class="btn-block-list">
+      <button class="btn btn-primary" onclick="App.novoApontamentoMesmoLocal()">+ Adicionar mais itens deste Sub-bloco</button>
+      <button class="btn btn-secondary" onclick="Screens.go('atividade')">Adicionar outra atividade ou tags de outros blocos</button>
+      <button class="btn btn-secondary" style="border-color:var(--success); color:var(--success)" onclick="App.concluirECompartilhar()">✅ Concluir apontamento e compartilhar no WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: SYNC ===================== -->
+  <div class="screen" id="screen-sync">
+    <button class="link-btn" style="margin-bottom:10px; align-self:flex-start" onclick="Screens.voltar()">← Voltar</button>
+    <div class="screen-title">Fila de sincronização</div>
+    <div class="screen-desc">Apontamentos salvos neste aparelho. Enviados automaticamente ao detectar internet.</div>
+    <div class="btn-block-list" style="margin-bottom:16px">
+      <button class="btn btn-primary" onclick="App.adicionarNovoApontamento()">+ Adicionar novo apontamento</button>
+    </div>
+    <div id="listaSync"></div>
+    <div class="action-bar">
+      <button class="btn btn-secondary" style="margin-bottom:8px" onclick="App.compartilharFilaWhatsApp()">📤 Compartilhar fila no WhatsApp</button>
+      <button class="btn btn-primary" id="btnSyncAgora" onclick="Sync.sincronizarAgora()">Sincronizar agora</button>
+    </div>
+  </div>
+
+  <!-- ===================== TELA: CONFIG ===================== -->
+  <div class="screen" id="screen-config">
+    <div class="screen-title">Configurações</div>
+
+    <div class="field-group">
+      <label class="field-label">Equipe (nomes cadastrados)</label>
+      <div id="listaEquipe"></div>
+      <div class="field-inline" style="margin-top:10px">
+        <input type="text" id="novoNomeConfig" placeholder="Adicionar nome">
+        <button class="btn btn-secondary" style="width:auto; padding:0 16px; min-height:44px" onclick="App.adicionarNomeConfig()">+</button>
       </div>
     </div>
-    <div id="pageCanvasWrap">
-      <canvas id="pageCanvas"></canvas>
-      <span class="zoomHint">pinça para dar zoom · toque duplo para resetar</span>
-      <button class="btn fsExitBtn hidden" id="btnExitFullscreen">✕ Sair da tela cheia</button>
+
+    <div class="field-group">
+      <label class="field-label">URL de sincronização (Google Apps Script)</label>
+      <input type="text" id="inputSyncUrl" placeholder="https://script.google.com/macros/s/..." style="width:100%; padding:12px; border-radius:10px; border:1.5px solid var(--steel-light); font-size:13px;">
+      <div class="confidence-note">Cole aqui a URL do Web App gerado no Google Apps Script (veja o guia de configuração).</div>
+      <button class="btn btn-secondary" style="margin-top:10px" onclick="App.salvarSyncUrl()">Salvar URL</button>
     </div>
-    <div class="pageNav">
-      <button class="btn" id="btnPrevPage">◀ anterior</button>
-      <span id="pageIndicator">— / —</span>
-      <button class="btn" id="btnNextPage">próxima ▶</button>
+
+    <div class="field-group">
+      <label class="field-label">Base de referência (TAGS)</label>
+      <div class="confidence-note" id="infoBaseTags"></div>
     </div>
-    <div class="row" id="otherPagesRow"></div>
-  </section>
 
-</main>
+    <div style="margin-top:10px">
+      <button class="link-btn" onclick="Screens.go('operador')">← Voltar</button>
+    </div>
+  </div>
 
-<footer>
-  <span class="contact">Problemas? Contate Fábio: <a href="tel:+5565999338829">65 99933-8829</a></span>
-  <a class="admin" href="admin.html">área do preparador (importar documentos)</a>
-  <span class="version" id="versionTag"></span>
-</footer>
+</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="common.js"></script>
-<script src="reader.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
