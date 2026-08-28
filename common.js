@@ -2,7 +2,7 @@
    admin.html (importação, uso de quem prepara). Ambas as páginas vivem
    no mesmo domínio, então compartilham o mesmo IndexedDB. */
 
-const APP_VERSION = "v12";
+const APP_VERSION = "v13";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
